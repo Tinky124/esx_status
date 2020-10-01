@@ -1,52 +1,20 @@
 ESX = nil
-
+Status = {}
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
-Citizen.CreateThread(function()
-	Citizen.Wait(1000)
-	local players = ESX.GetPlayers()
-
-	for _,playerId in ipairs(players) do
-		local xPlayer = ESX.GetPlayerFromId(playerId)
-
-		MySQL.Async.fetchAll('SELECT status FROM users WHERE identifier = @identifier', {
-			['@identifier'] = xPlayer.identifier
-		}, function(result)
-			local data = {}
-
-			if result[1].status then
-				data = json.decode(result[1].status)
-			end
-
-			xPlayer.set('status', data)
-			TriggerClientEvent('esx_status:load', playerId, data)
-		end)
-	end
-end)
-
 AddEventHandler('esx:playerLoaded', function(playerId, xPlayer)
-	MySQL.Async.fetchAll('SELECT status FROM users WHERE identifier = @identifier', {
-		['@identifier'] = xPlayer.identifier
-	}, function(result)
-		local data = {}
+    xPlayer.set('status', Status[xPlayer.identifier] or {
+        {name = 'hunger', val = 500000},
+        {name = 'thirst', val = 500000},
+        {name = 'drunk',  val = 0},
+    })
 
-		if result[1].status then
-			data = json.decode(result[1].status)
-		end
-
-		xPlayer.set('status', data)
-		TriggerClientEvent('esx_status:load', playerId, data)
-	end)
+    TriggerClientEvent('esx_status:load', playerId, xPlayer.get('status'))
 end)
 
 AddEventHandler('esx:playerDropped', function(playerId, reason)
-	local xPlayer = ESX.GetPlayerFromId(playerId)
-	local status = xPlayer.get('status')
-
-	MySQL.Async.execute('UPDATE users SET status = @status WHERE identifier = @identifier', {
-		['@status']     = json.encode(status),
-		['@identifier'] = xPlayer.identifier
-	})
+    local xPlayer = ESX.GetPlayerFromId(playerId)
+    Status[xPlayer.identifier] = xPlayer.get('status') or {}
 end)
 
 AddEventHandler('esx_status:getStatus', function(playerId, statusName, cb)
@@ -69,21 +37,3 @@ AddEventHandler('esx_status:update', function(status)
 		xPlayer.set('status', status)
 	end
 end)
-
-function SaveData()
-	local xPlayers = ESX.GetPlayers()
-
-	for i=1, #xPlayers, 1 do
-		local xPlayer = ESX.GetPlayerFromId(xPlayers[i])
-		local status  = xPlayer.get('status')
-
-		MySQL.Async.execute('UPDATE users SET status = @status WHERE identifier = @identifier', {
-			['@status']     = json.encode(status),
-			['@identifier'] = xPlayer.identifier
-		})
-	end
-
-	SetTimeout(10 * 60 * 1000, SaveData)
-end
-
-SaveData()
