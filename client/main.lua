@@ -4,7 +4,7 @@ local Status, isPaused = {}, false
 Citizen.CreateThread(function()
 	while ESX == nil do
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-		Citizen.Wait(0)
+		Citizen.Wait(10)
 	end
 end)
 
@@ -83,11 +83,7 @@ AddEventHandler('esx_status:set', function(name, val)
 		end
 	end
 
-	SendNUIMessage({
-		update = true,
-		status = GetStatusData()
-	})
-
+	SendNUIMessage({update = true,status = GetStatusData()})
 	TriggerServerEvent('esx_status:update', GetStatusData(true))
 end)
 
@@ -100,11 +96,7 @@ AddEventHandler('esx_status:add', function(name, val)
 		end
 	end
 
-	SendNUIMessage({
-		update = true,
-		status = GetStatusData()
-	})
-
+	SendNUIMessage({update = true,status = GetStatusData()})
 	TriggerServerEvent('esx_status:update', GetStatusData(true))
 end)
 
@@ -117,11 +109,7 @@ AddEventHandler('esx_status:remove', function(name, val)
 		end
 	end
 
-	SendNUIMessage({
-		update = true,
-		status = GetStatusData()
-	})
-
+	SendNUIMessage({update = true,status = GetStatusData()})
 	TriggerServerEvent('esx_status:update', GetStatusData(true))
 end)
 
@@ -133,19 +121,11 @@ AddEventHandler('esx_status:getStatus', function(name, cb)
 		end
 	end
 end)
-
-AddEventHandler('esx_status:setDisplay', function(val)
-	SendNUIMessage({
-		setDisplay = true,
-		display    = val
-	})
-end)
-
+AddEventHandler('esx_status:setDisplay', function(val) SendNUIMessage({setDisplay = true,display = val}) end)
 -- Pause menu disable hud display
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(300)
-
+		Wait(300)
 		if IsPauseMenuActive() and not isPaused then
 			isPaused = true
 			TriggerEvent('esx_status:setDisplay', 0.0)
@@ -165,7 +145,6 @@ end)
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(Config.UpdateInterval)
-
 		TriggerServerEvent('esx_status:update', GetStatusData(true))
 	end
 end)
